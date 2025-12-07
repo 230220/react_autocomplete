@@ -4,14 +4,14 @@ import { Person } from '../types/Person';
 
 type Props = {
   people: Person[];
-  onSelect: (person: Person | null) => void;
+  onSelected: (person: Person | null) => void;
   delay?: number;
   selectedPerson: Person | null;
 };
 
 export const Autocomplete: React.FC<Props> = ({
   people,
-  onSelect,
+  onSelected,
   delay = 300,
   selectedPerson,
 }) => {
@@ -27,7 +27,7 @@ export const Autocomplete: React.FC<Props> = ({
     window.clearTimeout(timerId.current);
     if (selectedPerson) {
       if (event.target.value !== selectedPerson.name) {
-        onSelect(null);
+        onSelected(null);
       }
     }
 
@@ -36,8 +36,6 @@ export const Autocomplete: React.FC<Props> = ({
 
       if (trimmed !== '') {
         setRefreshingQuery(trimmed);
-      } else {
-        setRefreshingQuery('');
       }
     }, delay);
   };
@@ -49,15 +47,26 @@ export const Autocomplete: React.FC<Props> = ({
   }, []);
 
   const handlePersonClick = (person: Person) => {
-    onSelect(person);
+    onSelected(person);
     setQuery(person.name);
     setRefreshingQuery(person.name);
     setIsOpen(false);
   };
 
+  //const filteredPeople = useMemo(() => {
+  //if (!refreshingQuery) {
+  // return [];
+  // }
+  // return people.filter(person => person.name.includes(refreshingQuery));
+  //}, [refreshingQuery, people]);
+
   const filteredPeople = useMemo(() => {
-    return people.filter(person => person.name.includes(refreshingQuery));
-  }, [refreshingQuery, people]);
+    if (refreshingQuery) {
+      return people.filter(person => person.name.includes(refreshingQuery));
+    }
+
+    return isOpen ? people : [];
+  }, [refreshingQuery, people, isOpen]);
 
   //};
   return (
@@ -67,6 +76,7 @@ export const Autocomplete: React.FC<Props> = ({
           type="text"
           placeholder="Enter a part of the name"
           className="input"
+          data-qa="search-input"
           data-cy="search-input"
           value={query}
           onChange={handleQueryChange}
@@ -75,12 +85,18 @@ export const Autocomplete: React.FC<Props> = ({
       </div>
 
       {isOpen && (
-        <div className="dropdown-menu" role="menu" data-cy="suggestions-list">
+        <div
+          className="dropdown-menu"
+          role="menu"
+          data-cy="suggestions-list"
+          data-qa="suggestions-list"
+        >
           <div className="dropdown-content">
             {filteredPeople.length !== 0 ? (
               filteredPeople.map(person => (
                 <div
                   className="dropdown-item"
+                  data-qa="suggestion-item"
                   data-cy="suggestion-item"
                   key={person.slug}
                   onClick={() => handlePersonClick(person)}
@@ -99,6 +115,7 @@ export const Autocomplete: React.FC<Props> = ({
                 is-align-self-flex-start
               "
                 role="alert"
+                //data-qa="no-suggestions-message"
                 data-cy="no-suggestions-message"
               >
                 <p className="has-text-danger">No matching suggestions</p>
