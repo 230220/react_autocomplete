@@ -1,5 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Person } from '../types/Person';
+// import { el } from '@faker-js/faker';
 
 type Props = {
   people: Person[];
@@ -20,7 +21,7 @@ export const Autocomplete: React.FC<Props> = ({
 
   const timerId = useRef(0);
 
-  const handelQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
 
     window.clearTimeout(timerId.current);
@@ -31,9 +32,21 @@ export const Autocomplete: React.FC<Props> = ({
     }
 
     timerId.current = window.setTimeout(() => {
-      setRefreshingQuery(event.target.value);
+      const trimmed = event.target.value.trim();
+
+      if (trimmed !== '') {
+        setRefreshingQuery(trimmed);
+      } else {
+        setRefreshingQuery('');
+      }
     }, delay);
   };
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(timerId.current);
+    };
+  }, []);
 
   const handlePersonClick = (person: Person) => {
     onSelect(person);
@@ -48,7 +61,7 @@ export const Autocomplete: React.FC<Props> = ({
 
   //};
   return (
-    <div className="dropdown is-active">
+    <div className={`dropdown ${isOpen ? 'is-active' : ''}`}>
       <div className="dropdown-trigger">
         <input
           type="text"
@@ -56,7 +69,7 @@ export const Autocomplete: React.FC<Props> = ({
           className="input"
           data-cy="search-input"
           value={query}
-          onChange={handelQueryChange}
+          onChange={handleQueryChange}
           onFocus={() => setIsOpen(true)}
         />
       </div>
